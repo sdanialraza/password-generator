@@ -84,9 +84,9 @@ mod tests {
             length: 10,
         };
 
-        let password = RandomPassword::new(options);
+        let random_password = RandomPassword::new(options);
 
-        for character in password.characters.iter() {
+        for character in random_password.password.chars() {
             assert!(character.is_ascii_lowercase());
         }
     }
@@ -101,9 +101,9 @@ mod tests {
             length: 10,
         };
 
-        let password = RandomPassword::new(options);
+        let random_password = RandomPassword::new(options);
 
-        for character in password.characters.iter() {
+        for character in random_password.password.chars() {
             assert!(character.is_ascii_uppercase());
         }
     }
@@ -118,9 +118,9 @@ mod tests {
             length: 10,
         };
 
-        let password = RandomPassword::new(options);
+        let random_password = RandomPassword::new(options);
 
-        for character in password.characters.iter() {
+        for character in random_password.password.chars() {
             assert!(character.is_ascii_digit());
         }
     }
@@ -135,9 +135,9 @@ mod tests {
             length: 10,
         };
 
-        let password = RandomPassword::new(options);
+        let random_password = RandomPassword::new(options);
 
-        for character in password.characters.iter() {
+        for character in random_password.password.chars() {
             assert!(character.is_ascii_punctuation());
         }
     }
@@ -146,13 +146,13 @@ mod tests {
     fn it_generates_lower_upper_numbers_special_characters_password() {
         let options = RandomPasswordOptions::default();
 
-        let password = RandomPassword::new(options);
+        let random_password = RandomPassword::new(options);
 
-        for character in password.characters.iter() {
+        for character in random_password.password.chars() {
             assert!(character.is_ascii_alphanumeric() || character.is_ascii_punctuation());
         }
 
-        assert_eq!(password.password.len(), 10);
+        assert_eq!(random_password.password.len(), 10);
     }
 
     #[test]
@@ -162,8 +162,14 @@ mod tests {
             ..RandomPasswordOptions::default()
         };
 
-        let password = RandomPassword::new(options);
+        let random_password = RandomPassword::new(options);
 
-        assert_eq!(password.password.len(), 30);
+        for character in random_password.password.chars() {
+            assert!(
+                character.is_ascii_alphanumeric() || character.is_ascii_digit() || character.is_ascii_punctuation()
+            );
+        }
+
+        assert_eq!(random_password.password.len(), 30);
     }
 }
