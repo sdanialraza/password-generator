@@ -34,7 +34,7 @@ fn main() -> Result<(), Error> {
                 None => return Box::<PasswordGenerator>::default(),
             };
 
-            let recent_passwords: Vec<String> = match storage.get_string("recent_passwords") {
+            let recent_passwords = match storage.get_string("recent_passwords") {
                 Some(passwords) => from_str(passwords.as_str()).unwrap_or_default(),
                 None => return Box::<PasswordGenerator>::default(),
             };
@@ -70,7 +70,7 @@ impl App for PasswordGenerator {
 
         let mut recent_passwords = match storage.get_string("recent_passwords") {
             Some(passwords) => {
-                let passwords: Vec<String> = from_str(passwords.as_str()).unwrap_or_default();
+                let passwords: Vec<_> = from_str(passwords.as_str()).unwrap_or_default();
 
                 passwords_to_add.extend(passwords);
 
