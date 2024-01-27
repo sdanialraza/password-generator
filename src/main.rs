@@ -29,20 +29,15 @@ fn main() -> Result<(), Error> {
         "Password Generator",
         options,
         Box::new(|creation_context| {
-            if creation_context.storage.is_none() {
-                return Box::<PasswordGenerator>::default();
-            }
+            let storage = match creation_context.storage {
+                Some(storage) => storage,
+                None => return Box::<PasswordGenerator>::default(),
+            };
 
-            let storage = creation_context.storage.unwrap();
-
-            if storage.get_string("recent_passwords").is_none() {
-                println!("recent_passwords got nothin");
-                return Box::<PasswordGenerator>::default();
-            }
-
-            let recent_passwords = storage.get_string("recent_passwords").unwrap_or_default();
-
-            let recent_passwords: Vec<String> = from_str(recent_passwords.as_str()).unwrap_or_default();
+            let recent_passwords: Vec<String> = match storage.get_string("recent_passwords") {
+                Some(passwords) => from_str(passwords.as_str()).unwrap_or_default(),
+                None => return Box::<PasswordGenerator>::default(),
+            };
 
             Box::new(PasswordGenerator {
                 recent_passwords,
@@ -51,7 +46,6 @@ fn main() -> Result<(), Error> {
         }),
     )
 }
-
 struct PasswordGenerator {
     options: RandomPasswordOptions,
     password: String,
@@ -74,21 +68,22 @@ impl App for PasswordGenerator {
 
         passwords_to_add.push(self.password.clone());
 
-        let stored_recent_passwords = storage.get_string("recent_passwords").unwrap_or_default();
+        let mut recent_passwords = match storage.get_string("recent_passwords") {
+            Some(passwords) => {
+                let passwords: Vec<String> = from_str(passwords.as_str()).unwrap_or_default();
 
-        let stored_recent_passwords: Vec<String> = from_str(stored_recent_passwords.as_str()).unwrap_or_default();
+                passwords_to_add.extend(passwords);
 
-        if !stored_recent_passwords.is_empty() {
-            passwords_to_add.extend(stored_recent_passwords);
-        }
+                passwords_to_add
+            }
+            None => passwords_to_add,
+        };
 
-        passwords_to_add.sort();
+        recent_passwords.sort();
 
-        passwords_to_add.dedup();
+        recent_passwords.dedup();
 
-        passwords_to_add.truncate(10);
-
-        storage.set_string("recent_passwords", json!(passwords_to_add).to_string());
+        storage.set_string("recent_passwords", json!(recent_passwords).to_string());
     }
 
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
