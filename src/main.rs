@@ -10,7 +10,7 @@ mod types;
 
 use crate::{
     app::PasswordGenerator,
-    constants::{APP_ID, APP_NAME},
+    constants::{APP_ID, APP_NAME, WINDOW_DIMENSIONS},
 };
 
 fn main() -> Result<(), Error> {
@@ -19,7 +19,7 @@ fn main() -> Result<(), Error> {
         follow_system_theme: true,
         viewport: ViewportBuilder::default()
             .with_app_id(APP_ID)
-            .with_inner_size([300.0, 200.0]),
+            .with_inner_size(WINDOW_DIMENSIONS),
         ..Default::default()
     };
 
