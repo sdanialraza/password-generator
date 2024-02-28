@@ -29,9 +29,9 @@ impl App for PasswordGenerator {
             None => passwords_to_add,
         };
 
-        recent_passwords.sort();
-
         recent_passwords.dedup();
+
+        recent_passwords.sort();
 
         recent_passwords.truncate(10);
 
@@ -59,35 +59,39 @@ impl App for PasswordGenerator {
                 self.options.include_special_characters,
             ];
 
-            if ui.button(RichText::new("Generate")).clicked() {
-                if !checkbox_options.iter().any(|&x| x) {
-                    return self.password = String::from("At least one of checkboxes should be checked");
+            ui.horizontal(|ui| {
+                if ui.button(RichText::new("Generate").size(14.0)).clicked() {
+                    if !checkbox_options.iter().any(|&x| x) {
+                        return self.password = String::from("At least one of checkboxes should be checked");
+                    }
+
+                    self.password = RandomPassword::new(self.options).password;
+
+                    if self.recent_passwords.len() >= 10 {
+                        self.recent_passwords.pop();
+                    }
+
+                    self.recent_passwords.push(self.password.clone());
                 }
 
-                self.password = RandomPassword::new(self.options).password;
+                if ui.button(RichText::new("Copy").size(14.0)).clicked() {
+                    let mut context = ClipboardContext::new().unwrap();
 
-                if self.recent_passwords.len() >= 10 {
-                    self.recent_passwords.pop();
-                }
-
-                self.recent_passwords.push(self.password.clone());
-            }
-
-            if ui.button(RichText::new("Copy")).clicked() {
-                let mut context = ClipboardContext::new().unwrap();
-
-                let _copied = context.set_contents(self.password.to_string());
-            }
-
-            ui.separator();
-
-            ui.heading("Recent Passwords");
-
-            ui.vertical(|ui| {
-                for password in self.recent_passwords.iter().rev() {
-                    ui.label(RichText::new(password.to_string()).size(14.0));
+                    let _copied = context.set_contents(self.password.to_string());
                 }
             });
+
+            if !self.recent_passwords.is_empty() {
+                ui.separator();
+
+                ui.heading("Recent Passwords");
+
+                ui.vertical(|ui| {
+                    for password in self.recent_passwords.iter().rev() {
+                        ui.label(RichText::new(password.to_string()).size(14.0));
+                    }
+                });
+            }
         });
     }
 }
