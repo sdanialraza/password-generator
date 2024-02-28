@@ -1,36 +1,40 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::constants::SPECIAL_CHARACTERS;
+use crate::{
+    constants::SPECIAL_CHARACTERS,
+    types::{PasswordGeneratorOptions, RandomPassword},
+};
 
-#[derive(Copy, Clone)]
-pub struct RandomPasswordOptions {
-    pub length: u8,
-    pub include_lowercase: bool,
-    pub include_uppercase: bool,
-    pub include_numbers: bool,
-    pub include_special_characters: bool,
-}
-
-impl Default for RandomPasswordOptions {
+impl Default for PasswordGeneratorOptions {
     fn default() -> Self {
         Self {
-            length: 10,
             include_lowercase: true,
-            include_uppercase: true,
             include_numbers: true,
             include_special_characters: true,
+            include_uppercase: true,
+            length: 10,
         }
     }
 }
 
-pub struct RandomPassword {
-    pub characters: Vec<char>,
+pub struct PasswordGenerator {
+    pub options: PasswordGeneratorOptions,
     pub password: String,
-    pub range: Uniform<usize>,
+    pub recent_passwords: Vec<String>,
+}
+
+impl Default for PasswordGenerator {
+    fn default() -> Self {
+        Self {
+            options: PasswordGeneratorOptions::default(),
+            password: RandomPassword::new(PasswordGeneratorOptions::default()).password,
+            recent_passwords: Vec::with_capacity(10),
+        }
+    }
 }
 
 impl RandomPassword {
-    pub fn new(options: RandomPasswordOptions) -> Self {
+    pub fn new(options: PasswordGeneratorOptions) -> Self {
         let mut password = String::new();
         let mut characters: Vec<char> = Vec::with_capacity(86);
 
@@ -72,11 +76,11 @@ impl RandomPassword {
 
 #[cfg(test)]
 mod tests {
-    use super::{RandomPassword, RandomPasswordOptions};
+    use super::{PasswordGeneratorOptions, RandomPassword};
 
     #[test]
     fn it_generates_lowercase_only_password() {
-        let options = RandomPasswordOptions {
+        let options = PasswordGeneratorOptions {
             include_lowercase: true,
             include_uppercase: false,
             include_numbers: false,
@@ -93,7 +97,7 @@ mod tests {
 
     #[test]
     fn it_generates_uppercase_only_password() {
-        let options = RandomPasswordOptions {
+        let options = PasswordGeneratorOptions {
             include_lowercase: false,
             include_uppercase: true,
             include_numbers: false,
@@ -110,7 +114,7 @@ mod tests {
 
     #[test]
     fn it_generates_numbers_only_password() {
-        let options = RandomPasswordOptions {
+        let options = PasswordGeneratorOptions {
             include_lowercase: false,
             include_uppercase: false,
             include_numbers: true,
@@ -127,7 +131,7 @@ mod tests {
 
     #[test]
     fn it_generates_special_characters_only_password() {
-        let options = RandomPasswordOptions {
+        let options = PasswordGeneratorOptions {
             include_lowercase: false,
             include_uppercase: false,
             include_numbers: false,
@@ -144,7 +148,7 @@ mod tests {
 
     #[test]
     fn it_generates_lower_upper_numbers_special_characters_password() {
-        let options = RandomPasswordOptions::default();
+        let options = PasswordGeneratorOptions::default();
 
         let random_password = RandomPassword::new(options);
 
@@ -157,9 +161,9 @@ mod tests {
 
     #[test]
     fn it_generates_random_password_with_length() {
-        let options = RandomPasswordOptions {
+        let options = PasswordGeneratorOptions {
             length: 30,
-            ..RandomPasswordOptions::default()
+            ..PasswordGeneratorOptions::default()
         };
 
         let random_password = RandomPassword::new(options);
