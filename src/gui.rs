@@ -33,6 +33,8 @@ impl App for PasswordGenerator {
 
         recent_passwords.dedup();
 
+        recent_passwords.truncate(10);
+
         storage.set_string("recent_passwords", json!(recent_passwords).to_string());
     }
 
