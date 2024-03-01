@@ -76,7 +76,7 @@ impl RandomPassword {
 
 #[cfg(test)]
 mod tests {
-    use super::{PasswordGeneratorOptions, RandomPassword};
+    use crate::types::{PasswordGeneratorOptions, RandomPassword};
 
     #[test]
     fn it_generates_lowercase_only_password() {
@@ -85,7 +85,7 @@ mod tests {
             include_uppercase: false,
             include_numbers: false,
             include_special_characters: false,
-            length: 10,
+            ..Default::default()
         };
 
         let random_password = RandomPassword::new(options);
@@ -102,7 +102,7 @@ mod tests {
             include_uppercase: true,
             include_numbers: false,
             include_special_characters: false,
-            length: 10,
+            ..Default::default()
         };
 
         let random_password = RandomPassword::new(options);
@@ -119,7 +119,7 @@ mod tests {
             include_uppercase: false,
             include_numbers: true,
             include_special_characters: false,
-            length: 10,
+            ..Default::default()
         };
 
         let random_password = RandomPassword::new(options);
@@ -136,7 +136,7 @@ mod tests {
             include_uppercase: false,
             include_numbers: false,
             include_special_characters: true,
-            length: 10,
+            ..Default::default()
         };
 
         let random_password = RandomPassword::new(options);
@@ -148,22 +148,20 @@ mod tests {
 
     #[test]
     fn it_generates_lower_upper_numbers_special_characters_password() {
-        let options = PasswordGeneratorOptions::default();
-
-        let random_password = RandomPassword::new(options);
+        let random_password = RandomPassword::default();
 
         for character in random_password.password.chars() {
             assert!(character.is_ascii_alphanumeric() || character.is_ascii_punctuation());
         }
 
-        assert_eq!(random_password.password.len(), 10);
+        assert_eq!(random_password.password.len(), 16);
     }
 
     #[test]
     fn it_generates_random_password_with_length() {
         let options = PasswordGeneratorOptions {
             length: 30,
-            ..PasswordGeneratorOptions::default()
+            ..Default::default()
         };
 
         let random_password = RandomPassword::new(options);
