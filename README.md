@@ -2,11 +2,11 @@
 
 [![CI Tests](https://github.com/sdanialraza/password-generator/actions/workflows/tests.yml/badge.svg)](https://github.com/sdanialraza/password-generator/actions/workflows/tests.yml)
 
-A cross-platform password generator application that can generate passwords with a length of up to 50 characters.
+A cross-platform password generator application that can generate passwords with a length of up to **128** characters.
 
 You can also choose whether to include uppercase letters, lowercase letters, numbers, and special characters in the password.
 
-By default, it generates a password with a length of **10** characters and includes uppercase letters, lowercase letters, numbers, and special characters.
+By default, it generates a password with a length of **16** characters and includes uppercase letters, lowercase letters, numbers, and special characters.
 
 ## Installation
 

@@ -9,8 +9,8 @@ mod gui;
 mod types;
 
 use crate::{
-    app::PasswordGenerator,
     constants::{APP_ID, APP_NAME, WINDOW_DIMENSIONS},
+    types::PasswordGenerator,
 };
 
 fn main() -> Result<(), Error> {

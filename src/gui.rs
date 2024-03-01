@@ -1,19 +1,22 @@
 use copypasta::{ClipboardContext, ClipboardProvider};
 use eframe::{
     egui::{CentralPanel, Context, RichText, Slider},
-    App, Frame,
+    App, Frame, Storage,
 };
 use serde_json::{from_str, json};
 use std::time::Duration;
 
-use crate::{app::PasswordGenerator, constants::MAX_PASSWORD_LENGTH, types::RandomPassword};
+use crate::{
+    constants::PASSWORD_LENGTH_RANGE,
+    types::{PasswordGenerator, RandomPassword},
+};
 
 impl App for PasswordGenerator {
     fn auto_save_interval(&self) -> Duration {
         Duration::from_secs(5)
     }
 
-    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+    fn save(&mut self, storage: &mut dyn Storage) {
         let mut passwords_to_add: Vec<String> = Vec::with_capacity(10);
 
         passwords_to_add.push(self.password.clone());
@@ -42,7 +45,7 @@ impl App for PasswordGenerator {
         CentralPanel::default().show(ctx, |ui| {
             ui.label(RichText::new(self.password.to_string()).size(18.0));
 
-            ui.add(Slider::new(&mut self.options.length, 1..=MAX_PASSWORD_LENGTH).text("Length"));
+            ui.add(Slider::new(&mut self.options.length, PASSWORD_LENGTH_RANGE).text("Length"));
 
             ui.checkbox(&mut self.options.include_lowercase, "Include Lowercase");
             ui.checkbox(&mut self.options.include_uppercase, "Include Uppercase");

@@ -1,9 +1,19 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    constants::SPECIAL_CHARACTERS,
-    types::{PasswordGeneratorOptions, RandomPassword},
+    constants::{DEFAULT_PASSWORD_LENGTH, SPECIAL_CHARACTERS},
+    types::{PasswordGenerator, PasswordGeneratorOptions, RandomPassword},
 };
+
+impl Default for PasswordGenerator {
+    fn default() -> Self {
+        Self {
+            options: PasswordGeneratorOptions::default(),
+            password: RandomPassword::default().password,
+            recent_passwords: Vec::with_capacity(10),
+        }
+    }
+}
 
 impl Default for PasswordGeneratorOptions {
     fn default() -> Self {
@@ -12,24 +22,14 @@ impl Default for PasswordGeneratorOptions {
             include_numbers: true,
             include_special_characters: true,
             include_uppercase: true,
-            length: 10,
+            length: DEFAULT_PASSWORD_LENGTH,
         }
     }
 }
 
-pub struct PasswordGenerator {
-    pub options: PasswordGeneratorOptions,
-    pub password: String,
-    pub recent_passwords: Vec<String>,
-}
-
-impl Default for PasswordGenerator {
+impl Default for RandomPassword {
     fn default() -> Self {
-        Self {
-            options: PasswordGeneratorOptions::default(),
-            password: RandomPassword::new(PasswordGeneratorOptions::default()).password,
-            recent_passwords: Vec::with_capacity(10),
-        }
+        Self::new(PasswordGeneratorOptions::default())
     }
 }
 
