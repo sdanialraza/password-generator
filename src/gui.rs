@@ -13,36 +13,29 @@ use crate::{
 
 impl App for PasswordGenerator {
     fn auto_save_interval(&self) -> Duration {
-        Duration::from_secs(5)
+        Duration::from_secs(1)
     }
 
     fn save(&mut self, storage: &mut dyn Storage) {
-        let mut passwords_to_add: Vec<String> = Vec::with_capacity(10);
+        if !self.recent_passwords.contains(&self.password) {
+            self.recent_passwords.push(self.password.clone());
+        }
 
-        passwords_to_add.push(self.password.clone());
-
-        let mut recent_passwords = match storage.get_string("recent_passwords") {
+        let recent_passwords = match storage.get_string("recent_passwords") {
             Some(passwords) => {
-                let passwords: Vec<_> = from_str(passwords.as_str()).unwrap_or_default();
-
-                passwords_to_add.extend(passwords);
-
-                passwords_to_add
+                let mut passwords: Vec<_> = from_str(passwords.as_str()).unwrap_or_default();
+                passwords.push(self.password.clone());
+                passwords.truncate(10);
+                passwords
             }
-            None => passwords_to_add,
+            None => vec![self.password.clone()],
         };
-
-        recent_passwords.dedup();
-
-        recent_passwords.sort();
-
-        recent_passwords.truncate(10);
 
         storage.set_string("recent_passwords", json!(recent_passwords).to_string());
     }
 
-    fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
-        CentralPanel::default().show(ctx, |ui| {
+    fn update(&mut self, context: &Context, _frame: &mut Frame) {
+        CentralPanel::default().show(context, |ui| {
             ui.label(RichText::new(self.password.to_string()).size(18.0));
 
             ui.add(Slider::new(&mut self.options.length, PASSWORD_LENGTH_RANGE).text("Length"));
@@ -68,12 +61,11 @@ impl App for PasswordGenerator {
                         return self.password = String::from("At least one of checkboxes should be checked");
                     }
 
-                    self.password = RandomPassword::new(self.options).password;
-
                     if self.recent_passwords.len() >= 10 {
-                        self.recent_passwords.pop();
+                        self.recent_passwords.remove(0);
                     }
 
+                    self.password = RandomPassword::default().password;
                     self.recent_passwords.push(self.password.clone());
                 }
 
