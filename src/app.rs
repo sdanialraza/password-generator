@@ -1,177 +1,109 @@
-use rand::{distributions::Uniform, thread_rng, Rng};
+use copypasta::{ClipboardContext, ClipboardProvider};
+use eframe::{
+    egui::{CentralPanel, Context, RichText, Slider},
+    App, Frame, Storage,
+};
+use serde_json::{from_str, json};
+use std::time::Duration;
 
 use crate::{
-    constants::{DEFAULT_PASSWORD_LENGTH, SPECIAL_CHARACTERS},
-    types::{PasswordGenerator, PasswordGeneratorOptions, RandomPassword},
+    constants::PASSWORD_LENGTH_RANGE,
+    random_password::{RandomPassword, RandomPasswordOptions},
 };
+
+#[derive(Clone, Debug)]
+pub struct PasswordGenerator {
+    pub options: RandomPasswordOptions,
+    pub password: String,
+    pub recent_passwords: Vec<String>,
+}
 
 impl Default for PasswordGenerator {
     fn default() -> Self {
         Self {
-            options: PasswordGeneratorOptions::default(),
+            options: RandomPasswordOptions::default(),
             password: RandomPassword::default().password,
             recent_passwords: Vec::with_capacity(10),
         }
     }
 }
 
-impl Default for PasswordGeneratorOptions {
-    fn default() -> Self {
-        Self {
-            include_lowercase: true,
-            include_numbers: true,
-            include_special_characters: true,
-            include_uppercase: true,
-            length: DEFAULT_PASSWORD_LENGTH,
+impl App for PasswordGenerator {
+    fn auto_save_interval(&self) -> Duration {
+        Duration::from_secs(1)
+    }
+
+    fn save(&mut self, storage: &mut dyn Storage) {
+        if !self.recent_passwords.contains(&self.password) {
+            self.recent_passwords.push(self.password.clone());
         }
-    }
-}
 
-impl Default for RandomPassword {
-    fn default() -> Self {
-        Self::new(PasswordGeneratorOptions::default())
-    }
-}
-
-impl RandomPassword {
-    pub fn new(options: PasswordGeneratorOptions) -> Self {
-        let mut password = String::new();
-        let mut characters: Vec<char> = Vec::with_capacity(86);
-
-        if options.include_lowercase {
-            for i in b'a'..b'z' + 1 {
-                characters.push(i as char);
+        let recent_passwords = match storage.get_string("recent_passwords") {
+            Some(passwords) => {
+                let mut passwords: Vec<_> = from_str(passwords.as_str()).unwrap_or_default();
+                passwords.push(self.password.clone());
+                passwords.truncate(10);
+                passwords
             }
-        }
-
-        if options.include_uppercase {
-            for i in b'A'..b'Z' + 1 {
-                characters.push(i as char);
-            }
-        }
-
-        if options.include_numbers {
-            for i in b'0'..b'9' + 1 {
-                characters.push(i as char)
-            }
-        }
-
-        if options.include_special_characters {
-            characters.append(&mut SPECIAL_CHARACTERS.to_vec())
-        }
-
-        let characters_len = characters.len();
-
-        for _ in 1..=options.length {
-            password.push(characters[thread_rng().gen_range(1..characters_len)])
-        }
-
-        RandomPassword {
-            characters,
-            password,
-            range: Uniform::new(0, characters_len),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::types::{PasswordGeneratorOptions, RandomPassword};
-
-    #[test]
-    fn it_generates_lowercase_only_password() {
-        let options = PasswordGeneratorOptions {
-            include_lowercase: true,
-            include_uppercase: false,
-            include_numbers: false,
-            include_special_characters: false,
-            ..Default::default()
+            None => vec![self.password.clone()],
         };
 
-        let random_password = RandomPassword::new(options);
-
-        for character in random_password.password.chars() {
-            assert!(character.is_ascii_lowercase());
-        }
+        storage.set_string("recent_passwords", json!(recent_passwords).to_string());
     }
 
-    #[test]
-    fn it_generates_uppercase_only_password() {
-        let options = PasswordGeneratorOptions {
-            include_lowercase: false,
-            include_uppercase: true,
-            include_numbers: false,
-            include_special_characters: false,
-            ..Default::default()
-        };
+    fn update(&mut self, context: &Context, _frame: &mut Frame) {
+        CentralPanel::default().show(context, |ui| {
+            ui.label(RichText::new(self.password.to_string()).size(18.0));
 
-        let random_password = RandomPassword::new(options);
+            ui.add(Slider::new(&mut self.options.length, PASSWORD_LENGTH_RANGE).text("Length"));
 
-        for character in random_password.password.chars() {
-            assert!(character.is_ascii_uppercase());
-        }
-    }
-
-    #[test]
-    fn it_generates_numbers_only_password() {
-        let options = PasswordGeneratorOptions {
-            include_lowercase: false,
-            include_uppercase: false,
-            include_numbers: true,
-            include_special_characters: false,
-            ..Default::default()
-        };
-
-        let random_password = RandomPassword::new(options);
-
-        for character in random_password.password.chars() {
-            assert!(character.is_ascii_digit());
-        }
-    }
-
-    #[test]
-    fn it_generates_special_characters_only_password() {
-        let options = PasswordGeneratorOptions {
-            include_lowercase: false,
-            include_uppercase: false,
-            include_numbers: false,
-            include_special_characters: true,
-            ..Default::default()
-        };
-
-        let random_password = RandomPassword::new(options);
-
-        for character in random_password.password.chars() {
-            assert!(character.is_ascii_punctuation());
-        }
-    }
-
-    #[test]
-    fn it_generates_lower_upper_numbers_special_characters_password() {
-        let random_password = RandomPassword::default();
-
-        for character in random_password.password.chars() {
-            assert!(character.is_ascii_alphanumeric() || character.is_ascii_punctuation());
-        }
-
-        assert_eq!(random_password.password.len(), 16);
-    }
-
-    #[test]
-    fn it_generates_random_password_with_length() {
-        let options = PasswordGeneratorOptions {
-            length: 30,
-            ..Default::default()
-        };
-
-        let random_password = RandomPassword::new(options);
-
-        for character in random_password.password.chars() {
-            assert!(
-                character.is_ascii_alphanumeric() || character.is_ascii_digit() || character.is_ascii_punctuation()
+            ui.checkbox(&mut self.options.include_lowercase, "Include Lowercase");
+            ui.checkbox(&mut self.options.include_uppercase, "Include Uppercase");
+            ui.checkbox(&mut self.options.include_numbers, "Include Numbers");
+            ui.checkbox(
+                &mut self.options.include_special_characters,
+                "Include Special Characters",
             );
-        }
 
-        assert_eq!(random_password.password.len(), 30);
+            let checkbox_options = [
+                self.options.include_lowercase,
+                self.options.include_uppercase,
+                self.options.include_numbers,
+                self.options.include_special_characters,
+            ];
+
+            ui.horizontal(|ui| {
+                if ui.button(RichText::new("Generate").size(14.0)).clicked() {
+                    if !checkbox_options.iter().any(|&x| x) {
+                        return self.password = String::from("At least one of checkboxes should be checked");
+                    }
+
+                    if self.recent_passwords.len() >= 10 {
+                        self.recent_passwords.remove(0);
+                    }
+
+                    self.password = RandomPassword::default().password;
+                    self.recent_passwords.push(self.password.clone());
+                }
+
+                if ui.button(RichText::new("Copy").size(14.0)).clicked() {
+                    let mut context = ClipboardContext::new().unwrap();
+
+                    let _copied = context.set_contents(self.password.to_string());
+                }
+            });
+
+            if !self.recent_passwords.is_empty() {
+                ui.separator();
+
+                ui.heading("Recent Passwords");
+
+                ui.vertical(|ui| {
+                    for password in self.recent_passwords.iter().rev() {
+                        ui.label(RichText::new(password.to_string()).size(14.0));
+                    }
+                });
+            }
+        });
     }
 }

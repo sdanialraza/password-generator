@@ -5,12 +5,11 @@ use serde_json::from_str;
 
 mod app;
 mod constants;
-mod gui;
-mod types;
+mod random_password;
 
 use crate::{
+    app::PasswordGenerator,
     constants::{APP_ID, APP_NAME, WINDOW_DIMENSIONS},
-    types::PasswordGenerator,
 };
 
 fn main() -> Result<(), Error> {
