@@ -6,10 +6,7 @@ use eframe::{
 use serde_json::{from_str, json};
 use std::time::Duration;
 
-use crate::{
-    constants::PASSWORD_LENGTH_RANGE,
-    types::{PasswordGenerator, RandomPassword},
-};
+use crate::{app::PasswordGenerator, constants::PASSWORD_LENGTH_RANGE, random_password::RandomPassword};
 
 impl App for PasswordGenerator {
     fn auto_save_interval(&self) -> Duration {
