@@ -5,7 +5,6 @@ use serde_json::from_str;
 
 mod app;
 mod constants;
-mod gui;
 mod random_password;
 
 use crate::{
